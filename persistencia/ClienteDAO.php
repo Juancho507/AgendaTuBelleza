@@ -8,8 +8,10 @@ class ClienteDAO {
     private $telefono;
     private $estado;
     private $fechaRegistro;
+    private $gerente; 
+    private $foto;
     
-    public function __construct($id = "", $nombre = "", $apellido = "", $correo = "", $contraseña = "", $telefono = "", $estado = "", $fechaRegistro = "") {
+    public function __construct($id = "", $nombre = "", $apellido = "", $correo = "", $contraseña = "", $telefono = "", $estado = "", $fechaRegistro = "", $gerente = "", $foto = "") {
         $this->id = $id;
         $this->nombre = $nombre;
         $this->apellido = $apellido;
@@ -18,13 +20,14 @@ class ClienteDAO {
         $this->telefono = $telefono;
         $this->estado = $estado;
         $this->fechaRegistro = $fechaRegistro;
+        $this->gerente = $gerente;
+        $this->foto = $foto;
     }
     
     public function registrar() {
-        // 🟢 CORRECCIÓN 2: Se añade el Gerente_idGerente con un valor predeterminado (debe existir en la tabla 'gerente')
-        $gerenteIdDefecto = 1;
+        $gerenteIdDefecto = 1; 
         
-        return "INSERT INTO Cliente (Nombre, Apellido, Correo, Contraseña, Telefono, Estado, FechaRegistro, Gerente_idGerente)
+        return "INSERT INTO Cliente (Nombre, Apellido, Correo, Contraseña, Telefono, Estado, FechaRegistro, Gerente_idGerente, Foto)
                 VALUES (
                     '" . $this->nombre . "',
                     '" . $this->apellido . "',
@@ -33,7 +36,8 @@ class ClienteDAO {
                     '" . $this->telefono . "',
                     " . $this->estado . ",
                     '" . $this->fechaRegistro . "',
-                    " . $gerenteIdDefecto . "
+                    " . $gerenteIdDefecto . ",
+                    '" . $this->foto . "' 
                 )";
     }
     
@@ -49,19 +53,22 @@ class ClienteDAO {
     }
     
     public function consultar() {
-        return "SELECT Nombre, Apellido, Correo, Telefono, Estado, FechaRegistro
+        return "SELECT Nombre, Apellido, Correo, Telefono, Estado, FechaRegistro, Gerente_idGerente, Foto
                 FROM Cliente
                 WHERE idCliente = " . $this->id;
     }
     
     public function actualizar() {
+        $gerenteID = empty($this->gerente) ? 1 : $this->gerente;
         return "UPDATE Cliente SET
                     Nombre = '" . $this->nombre . "',
                     Apellido = '" . $this->apellido . "',
                     Correo = '" . $this->correo . "',
                     Contraseña = '" . $this->contraseña . "',
                     Telefono = '" . $this->telefono . "',
-                    Estado = " . $this->estado . "
+                    Estado = " . $this->estado . ",
+                    Gerente_idGerente = " . $gerenteID . ",
+                    Foto = '" . $this->foto . "' 
                 WHERE idCliente = " . $this->id;
     }
     
@@ -71,6 +78,22 @@ class ClienteDAO {
     
     public function activar() {
         return "UPDATE Cliente SET Estado = 1 WHERE idCliente = '{$this->id}'";
+    }
+    public function consultarHistorialCitas() {
+        return "SELECT
+                c.idCita,
+                ag.Fecha,
+                ag.HoraInicio,
+                s.Nombre AS Servicio,
+                e.Nombre AS Empleado,
+                ec.Tipo AS Estado
+            FROM cita c
+            INNER JOIN agenda ag ON c.Agenda_idAgenda = ag.idAgenda
+            INNER JOIN empleado e ON c.Empleado_idEmpleado = e.idEmpleado
+            INNER JOIN estadocita ec ON c.EstadoCita_idEstadoCita = ec.idEstadoCita
+            INNER JOIN servicio s ON c.Servicio_idServicio = s.idServicio
+            WHERE c.Cliente_idCliente = " . $this->id . "
+            ORDER BY c.idCita ASC"; 
     }
 }
 ?>

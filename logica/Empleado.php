@@ -58,5 +58,20 @@ class Empleado extends Persona {
             return false;
         }
     }
+    public static function consultarTodos() {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $empleadoDAO = new EmpleadoDAO();
+        $conexion->ejecutar($empleadoDAO->consultarTodos());
+        $empleados = [];
+        while ($registro = $conexion->registro()) {
+            $empleados[] = [
+                'idEmpleado' => $registro[0],
+                'NombreCompleto' => $registro[1] . " " . $registro[2]
+            ];
+        }
+        $conexion->cerrar();
+        return $empleados;
+    }
 }
 ?>

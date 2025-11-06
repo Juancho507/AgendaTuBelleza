@@ -6,14 +6,37 @@ require_once("persistencia/Conexion.php");
 class Cliente extends Persona {
     private $estado;
     private $fechaRegistro;
+    private $gerente; 
+    private $foto; 
     
-    public function __construct($id = "", $nombre = "", $apellido = "", $correo = "", $contraseña = "", $telefono = "", $estado = 1, $fechaRegistro = "") {
-        parent::__construct($id, $nombre, $apellido, $correo, $contraseña, $telefono);
-        $this->estado = $estado;
-        $this->fechaRegistro = $fechaRegistro;
+    public function __construct(
+        $id = "",
+        $nombre = "",
+        $apellido = "",
+        $correo = "",
+        $contraseña = "",
+        $telefono = "",
+        $estado = 1,
+        $fechaRegistro = "",
+        $gerente = "",
+        $foto = "" 
+        ) {
+           
+            parent::__construct($id, $nombre, $apellido, $correo, $contraseña, $telefono);
+            $this->estado = $estado;
+            $this->fechaRegistro = $fechaRegistro;
+            $this->gerente = $gerente;
+            $this->foto = $foto; 
     }
     
-    // ... (Getters y Setters)
+    
+    public function getFoto() {
+        return $this->foto;
+    }
+    
+    public function getGerente() {
+        return $this->gerente;
+    }
     
     public function getEstado() {
         return $this->estado;
@@ -23,30 +46,22 @@ class Cliente extends Persona {
         return $this->fechaRegistro;
     }
     
-    public function setEstado($estado) {
-        $this->estado = $estado;
-    }
-    
-    public function setFechaRegistro($fechaRegistro) {
-        $this->fechaRegistro = $fechaRegistro;
-    }
-    
     
     public function registrar() {
         $conexion = new Conexion();
         $conexion->abrir();
         $claveMd5 = md5($this->contraseña);
         
-        // 🟢 CORRECCIÓN 1: Se añade 'id: ""' para corregir la desalineación de argumentos nombrados.
         $clienteDAO = new ClienteDAO(
             id: "",
             nombre: $this->nombre,
             apellido: $this->apellido,
             correo: $this->correo,
-            contraseña: $claveMd5, // Clave ya cifrada
+            contraseña: $claveMd5,
             telefono: $this->telefono,
             estado: $this->estado,
-            fechaRegistro: date("Y-m-d H:i:s")
+            fechaRegistro: date("Y-m-d H:i:s"),
+            foto: $this->foto
             );
         
         $conexion->ejecutar($clienteDAO->registrar());
@@ -98,6 +113,12 @@ class Cliente extends Persona {
             $this->telefono = $datos[3];
             $this->estado = $datos[4];
             $this->fechaRegistro = $datos[5];
+            $this->gerente = $datos[6]; 
+            $this->foto = $datos[7];   
+            if (empty($this->gerente)) {
+                $this->gerente = 1;
+            }
+            
         }
         $conexion->cerrar();
     }
@@ -106,8 +127,7 @@ class Cliente extends Persona {
     public function actualizar() {
         $conexion = new Conexion();
         $conexion->abrir();
-        // Nota: Si la contraseña no se cambia, se puede pasar la que ya está guardada o gestionar el MD5 aquí.
-        $clienteDAO = new ClienteDAO($this->id, $this->nombre, $this->apellido, $this->correo, $this->contraseña, $this->telefono, $this->estado);
+        $clienteDAO = new ClienteDAO($this->id, $this->nombre, $this->apellido, $this->correo, $this->contraseña, $this->telefono, $this->estado, $this->fechaRegistro, $this->gerente, $this->foto);
         $conexion->ejecutar($clienteDAO->actualizar());
         $conexion->cerrar();
     }
@@ -129,5 +149,26 @@ class Cliente extends Persona {
         $conexion->ejecutar($clienteDAO->activar());
         $conexion->cerrar();
     }
+    public function consultarHistorialCitas() {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $clienteDAO = new ClienteDAO($this->id);
+        $conexion->ejecutar($clienteDAO->consultarHistorialCitas());
+        
+        $historial = [];
+        while ($registro = $conexion->registro()) {
+            $historial[] = [
+                'idCita' => $registro[0],
+                'Fecha' => $registro[1],
+                'HoraInicio' => $registro[2],
+                'Servicio' => $registro[3],
+                'Empleado' => $registro[4],
+                'Estado' => $registro[5]
+            ];
+        }
+        $conexion->cerrar();
+        return $historial;
+    }
+    
 }
 ?>

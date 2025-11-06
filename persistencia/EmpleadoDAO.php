@@ -23,5 +23,8 @@ class EmpleadoDAO {
     public function autenticarse() {
         return "SELECT idEmpleado FROM empleado WHERE correo = '{$this->correo}' AND contraseña = '{$this->contraseña}'";
     }
+    public function consultarTodos() {
+        return "SELECT idEmpleado, Nombre, Apellido FROM empleado WHERE Estado = 1 ORDER BY Apellido ASC";
+    }
 }
 ?>

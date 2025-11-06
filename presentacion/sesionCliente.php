@@ -16,41 +16,58 @@ $cliente->consultar();
 <div class="container mt-5">
   <div class="row">
     <div class="col-md-7 mx-auto"> 
-      <div class="card">
+      <div class="card shadow-sm">
         <div class="card-body">
-          <h2 class="my-2 text-center">Perfil del Cliente</h2>
+          <h2 class="my-2 text-center text-primary">Perfil</h2>
+          
+          <div class="text-center mb-4">
+            <?php
+            if ($cliente->getFoto() != "" && file_exists($cliente->getFoto())) {
+                echo "<img src='" . $cliente->getFoto() . "' class='rounded-circle shadow-lg' height='150' alt='Foto de perfil'>";
+            } else {
+                echo "
+                <p class='text-muted mt-2'>No hay foto de perfil.</p>";
+            }
+            ?>
+          </div>
           
           <div class="table-responsive-sm my-4">
             <table class="table table-striped table-hover">
-              <tr>
-                <th>ID</th>
-                <td><?php echo $cliente->getId(); ?></td>
-              </tr>
-              <tr>
-                <th>Nombre</th>
-                <td><?php echo $cliente->getNombre(); ?></td>
-              </tr>
-              <tr>
-                <th>Apellido</th>
-                <td><?php echo $cliente->getApellido(); ?></td>
-              </tr>
-              <tr>
-                <th>Correo</th>
-                <td><?php echo $cliente->getCorreo(); ?></td>
-              </tr>
-              <tr>
-                <th>Contacto</th>
-                <td><?php echo $cliente->getTelefono(); ?></td>
-              </tr>
+              <tbody>
+                <tr>
+                  <th>Nombre</th>
+                  <td><?php echo htmlspecialchars($cliente->getNombre()); ?></td>
+                </tr>
+                <tr>
+                  <th>Apellido</th>
+                  <td><?php echo htmlspecialchars($cliente->getApellido()); ?></td>
+                </tr>
+                <tr>
+                  <th>Correo</th>
+                  <td><?php echo htmlspecialchars($cliente->getCorreo()); ?></td>
+                </tr>
+                <tr>
+                  <th>Teléfono</th>
+                  <td><?php echo htmlspecialchars($cliente->getTelefono()); ?></td>
+                </tr>
+                <tr>
+                  <th>Estado de Cuenta</th>
+                  <td>
+                    <?php 
+                    $estado = $cliente->getEstado();
+                    if ($estado == 1) {
+                        echo '<span class="badge bg-success">Activo</span>';
+                    } else {
+                        echo '<span class="badge bg-danger">Inactivo</span>';
+                    }
+                    ?>
+                  </td>
+                </tr>
+             
+              </tbody>
             </table>
           </div>
           
-          <div class="text-center mt-3">
-              <a href="?pid=<?php echo base64_encode('presentacion/cliente/editarCliente.php'); ?>" class="btn btn-primary">
-                  Editar Perfil
-              </a>
-          </div>
-
         </div>
       </div>
     </div>

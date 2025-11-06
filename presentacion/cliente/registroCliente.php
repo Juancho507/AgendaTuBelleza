@@ -2,38 +2,66 @@
 $exito = false;
 $error = false;
 $correoDuplicado = false;
+$errorEnSubidaFoto = false;
+$mensaje = "";
+$claseMensaje = "";
+$fotoRuta = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // 1. Obtener todos los datos del formulario
     $nombre = $_POST["nombre"];
     $apellido = $_POST["apellido"];
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
     $telefono = $_POST["telefono"];
-    
-    // 🟢 OBTENER EL ESTADO DEL FORMULARIO
     $estado = $_POST["estado"];
-    
     $fechaRegistro = date("Y-m-d H:i:s");
     
-    // 2. Incluir la lógica
-    require_once "logica/Cliente.php";
+    if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] === UPLOAD_ERR_OK) {
+        $nombreFotoOriginal = $_FILES["foto"]["name"];
+        $rutaTemporal = $_FILES["foto"]["tmp_name"];
+        $extension = pathinfo($nombreFotoOriginal, PATHINFO_EXTENSION);
+        
+        if (strtolower($extension) != 'png') {
+            $mensaje = "Formato de imagen no permitido. Solo se aceptan imágenes PNG.";
+            $claseMensaje = "alert-danger";
+            $errorEnSubidaFoto = true;
+        } else {
+            $nuevoNombreFoto = time() . ".png";
+            $directorioDestino = "imagenes/";
+            $rutaServidor = $directorioDestino . $nuevoNombreFoto;
+            
+            if (move_uploaded_file($rutaTemporal, $rutaServidor)) {
+                $fotoRuta = $rutaServidor;
+            } else {
+                $mensaje = "Error al mover el archivo de la foto al servidor.";
+                $claseMensaje = "alert-danger";
+                $errorEnSubidaFoto = true;
+            }
+        }
+    } else if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] != UPLOAD_ERR_NO_FILE) {
+        $mensaje = "Error en la subida de la foto (código: " . $_FILES["foto"]["error"] . ").";
+        $claseMensaje = "alert-danger";
+        $errorEnSubidaFoto = true;
+    }
     
-    $cliente = new Cliente("", $nombre, $apellido, $correo, $contraseña, $telefono, $estado, $fechaRegistro);
-    
-    // 3. Verificar si el correo existe
-    if ($cliente->correoExiste()) {
-        $correoDuplicado = true;
-    } else {
-        try {
-            // 4. Intentar registrar
-            $cliente->registrar();
-            $exito = true;
-            $_POST = []; // Limpiar formulario
-        } catch (Exception $e) {
-            $error = true;
-            // 🚨 DEBUG ACTIVADO: Mostrar el mensaje de error de la base de datos
-            echo "<div class='alert alert-danger text-center mb-3'>❌ Error de la DB: " . $e->getMessage() . "</div>";
+    if (!$errorEnSubidaFoto) {
+        require_once "logica/Cliente.php";
+        $cliente = new Cliente("", $nombre, $apellido, $correo, $contraseña, $telefono, $estado, $fechaRegistro, $fotoRuta);
+        
+        if ($cliente->correoExiste()) {
+            $correoDuplicado = true;
+        } else {
+            try {
+                $cliente->registrar();
+                $exito = true;
+                $_POST = [];
+            } catch (Exception $e) {
+                $error = true;
+                if ($fotoRuta != "" && file_exists($fotoRuta)) {
+                    unlink($fotoRuta); 
+                }
+                echo "<div class='alert alert-danger text-center mb-3'>❌ Error de la DB: " . $e->getMessage() . "</div>";
+            }
         }
     }
 }
@@ -129,6 +157,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </select>
       </div>
 
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Foto de perfil (solo PNG)</label>
+        <input type="file" name="foto" class="form-control">
+      </div>
+
       <?php if ($exito): ?>
         <div class="alert alert-success text-center mb-3">
           ✅ ¡Cliente registrado exitosamente!
@@ -137,8 +170,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <div class="alert alert-danger text-center mb-3">
           ⚠️ El correo ya está registrado. Intenta con otro.
         </div>
+      <?php elseif ($errorEnSubidaFoto && !empty($mensaje)): ?>
+        <div class="alert <?= $claseMensaje ?> text-center mb-3"><?= $mensaje ?></div>
       <?php elseif ($error): ?>
-        <?php endif; ?>
+        <div class="alert alert-danger text-center mb-3">
+          ❌ Error al registrar el cliente. Inténtalo nuevamente.
+        </div>
+      <?php endif; ?>
 
       <button type="submit" name="registrarCliente" class="btn btn-registrar w-100 py-2 fw-semibold">
         Registrar

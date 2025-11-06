@@ -11,9 +11,12 @@ require("logica/Empleado.php");
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agenda tu belleza</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<link href="https://use.fontawesome.com/releases/v5.11.1/css/all.css" rel="stylesheet" />
+<script src="https://kit.fontawesome.com/14596e32cc.js" crossorigin="anonymous"></script>
   <link rel="shortcut icon" href="img/logo.png" type="image/x-icon">
 </head>
 
@@ -30,6 +33,8 @@ $paginas_sin_autenticacion = array(
 $paginas_con_autenticacion = array(
     "presentacion/cliente/editarCliente.php",
     "presentacion/cliente/eliminarCliente.php",
+    "presentacion/cliente/historialCliente.php",
+    "presentacion/cliente/registrarPQRS.php",
     "presentacion/sesionCliente.php",
     "presentacion/sesionEmpleado.php",
     "presentacion/sesionGerente.php"

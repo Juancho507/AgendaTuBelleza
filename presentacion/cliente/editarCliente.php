@@ -16,29 +16,52 @@ if (isset($_POST["editar"])) {
     $claveNueva = $_POST["contraseña"];
     $telefono = $_POST["telefono"];
     $estado = $_POST["estado"];
-
-    // Si no se cambia la contraseña, conservar la anterior
+    $foto = $_FILES["foto"]["name"];
+    $tam = $_FILES["foto"]["size"];
+    $rutaLocal = $_FILES["foto"]["tmp_name"];
+    
     $claveFinal = $cliente->getContraseña();
     if (!empty($claveNueva)) {
         $claveFinal = md5($claveNueva);
     }
-
-    // Crear objeto actualizado y guardar
-    try {
-        $clienteActualizado = new Cliente(
-            $id,
-            $nombre,
-            $apellido,
-            $correo,
-            $claveFinal,
-            $telefono,
-            $estado,
-            $cliente->getFechaRegistro()
-        );
-        $clienteActualizado->actualizar();
-        $cliente = $clienteActualizado;
-    } catch (Exception $e) {
-        $error = 1;
+    
+    // --- Manejo de la foto ---
+    $rutaServidor = $cliente->getFoto();
+    if ($foto != "") {
+        $nuevoNombre = time() . ".png";
+        $rutaServidor = "imagenes/" . $nuevoNombre;
+        if (copy($rutaLocal, $rutaServidor)) {
+            // Eliminar foto anterior si existe
+            if ($cliente->getFoto() != "") {
+                $rutaFotoAnterior = __DIR__ . "/../../" . $cliente->getFoto();
+                if (file_exists($rutaFotoAnterior)) {
+                    unlink($rutaFotoAnterior);
+                }
+            }
+        } else {
+            $error = 1; // error al subir foto
+        }
+    }
+    
+    if ($error == 0) {
+        try {
+            $clienteActualizado = new Cliente(
+                $id,
+                $nombre,
+                $apellido,
+                $correo,
+                $claveFinal,
+                $telefono,
+                $cliente->getEstado(),
+                $cliente->getFechaRegistro(),
+                $cliente->getGerente(),
+                $rutaServidor
+                );
+            $clienteActualizado->actualizar();
+            $cliente = $clienteActualizado;
+        } catch (Exception $e) {
+            $error = 1;
+        }
     }
 }
 ?>
@@ -59,10 +82,10 @@ include("presentacion/menuCliente.php");
                     if (isset($_POST["editar"]) && $error == 0) {
                         echo "<div class='alert alert-success'>Datos actualizados correctamente.</div>";
                     } elseif (isset($_POST["editar"]) && $error == 1) {
-                        echo "<div class='alert alert-danger'>Ocurrió un error al actualizar la información.</div>";
+                        echo "<div class='alert alert-danger'>Ocurrió un error al actualizar la información o la foto.</div>";
                     }
                     ?>
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label class="form-label">Nombre</label>
                             <input type="text" name="nombre" class="form-control" value="<?php echo htmlspecialchars($cliente->getNombre()); ?>" required>
@@ -83,13 +106,29 @@ include("presentacion/menuCliente.php");
                             <label class="form-label">Teléfono</label>
                             <input type="text" name="telefono" class="form-control" value="<?php echo htmlspecialchars($cliente->getTelefono()); ?>" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Estado</label>
-                            <select name="estado" class="form-select">
-                                <option value="1" <?php echo $cliente->getEstado() == 1 ? 'selected' : ''; ?>>Activo</option>
-                                <option value="0" <?php echo $cliente->getEstado() == 0 ? 'selected' : ''; ?>>Inactivo</option>
-                            </select>
+                      		 <div class="mb-3">
+    							<label class="form-label">Estado de la Cuenta</label>
+   								<input type="text" class="form-control" value="<?php echo $cliente->getEstado() == 1 ? 'Activo' : 'Inactivo (Acción administrativa)'; ?>" disabled>
+    							<input type="hidden" name="estado" value="<?php echo $cliente->getEstado(); ?>"> 
+							</div>
+
+                        <!-- FOTO ACTUAL -->
+                        <div class="mb-3 text-center">
+                            <?php
+                            if ($cliente->getFoto() != "" && file_exists($cliente->getFoto())) {
+                                echo "<img src='" . $cliente->getFoto() . "' height='150' class='rounded-circle mb-2' />";
+                            } else {
+                                echo "<p>No hay foto actual.</p>";
+                            }
+                            ?>
                         </div>
+
+                        <!-- NUEVA FOTO -->
+                        <div class="mb-3">
+                            <label class="form-label">Foto Nueva</label>
+                            <input type="file" name="foto" class="form-control">
+                        </div>
+
                         <button type="submit" name="editar" class="btn btn-primary">Guardar Cambios</button>
                     </form>
 
@@ -102,7 +141,6 @@ include("presentacion/menuCliente.php");
                             return confirm("¿Estás seguro de eliminar tu cuenta? Esta acción no se puede deshacer.");
                         }
                     </script>
-
                 </div>
             </div>
         </div>
