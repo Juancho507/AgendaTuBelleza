@@ -81,19 +81,29 @@ class ClienteDAO {
     }
     public function consultarHistorialCitas() {
         return "SELECT
-                c.idCita,
-                ag.Fecha,
-                ag.HoraInicio,
-                s.Nombre AS Servicio,
-                e.Nombre AS Empleado,
-                ec.Tipo AS Estado
-            FROM cita c
-            INNER JOIN agenda ag ON c.Agenda_idAgenda = ag.idAgenda
-            INNER JOIN empleado e ON c.Empleado_idEmpleado = e.idEmpleado
-            INNER JOIN estadocita ec ON c.EstadoCita_idEstadoCita = ec.idEstadoCita
-            INNER JOIN servicio s ON c.Servicio_idServicio = s.idServicio
-            WHERE c.Cliente_idCliente = " . $this->id . "
-            ORDER BY c.idCita ASC"; 
+        c.idCita,
+        ag.Fecha,
+        ag.HoraInicio,
+        ag.HoraFin,
+        s.Nombre AS Servicio,
+        e.Nombre AS Empleado,
+        ec.Tipo AS Estado
+    FROM cita c
+    INNER JOIN agenda ag ON c.Agenda_idAgenda = ag.idAgenda
+    INNER JOIN empleado e ON c.Empleado_idEmpleado = e.idEmpleado
+    INNER JOIN estadocita ec ON c.EstadoCita_idEstadoCita = ec.idEstadoCita
+        -- QUITAMOS el JOIN a 'servicio' si no se usa para nada más,
+        -- pero lo dejaremos ya que se usa para obtener s.Nombre AS Servicio.
+    INNER JOIN servicio s ON c.Servicio_idServicio = s.idServicio
+    WHERE c.Cliente_idCliente = " . $this->id . "
+    ORDER BY c.idCita DESC";
+    }
+    public function verificarCitasActivas() {
+        return "SELECT idCita
+                FROM cita
+                WHERE Cliente_idCliente = " . $this->id . "
+                AND EstadoCita_idEstadoCita IN (1, 2)
+                LIMIT 1";
     }
 }
 ?>

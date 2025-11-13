@@ -10,6 +10,7 @@ class PQRS {
     private $cliente;
     private $gerente;
     private $empleado;
+    private $evidencia;
     
     public function __construct(
         $id = "",
@@ -18,7 +19,8 @@ class PQRS {
         $tipoPQRS = "",
         $cliente = "",
         $gerente = "",
-        $empleado = ""
+        $empleado = "",
+        $evidencia = "" //
         ) {
             $this->id = $id;
             $this->descripcion = $descripcion;
@@ -27,6 +29,7 @@ class PQRS {
             $this->cliente = $cliente;
             $this->gerente = $gerente;
             $this->empleado = $empleado;
+            $this->evidencia = $evidencia;
     }
     
     
@@ -41,7 +44,8 @@ class PQRS {
             $this->tipoPQRS,              
             $this->cliente,                
             $gerenteId,                     
-            $this->empleado                  
+            $this->empleado,                
+            $this->evidencia
             );
         
         $conexion->ejecutar($pqrsDAO->registrar());
@@ -59,6 +63,21 @@ class PQRS {
         }
         $conexion->cerrar();
         return $tipos;
+    }
+    public static function consultarHistorialPorCliente($idCliente) {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $pqrsDAO = new PQRSDAO();
+        $conexion->ejecutar($pqrsDAO->consultarHistorialPorCliente($idCliente));
+        
+        $historial = [];
+        $resultado = $conexion->getResultado();
+        while ($fila = $resultado->fetch_assoc()) {
+            $historial[] = $fila;
+        }
+        
+        $conexion->cerrar();
+        return $historial;
     }
 }
 ?>

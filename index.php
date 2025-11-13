@@ -35,6 +35,7 @@ $paginas_con_autenticacion = array(
     "presentacion/cliente/eliminarCliente.php",
     "presentacion/cliente/historialCliente.php",
     "presentacion/cliente/registrarPQRS.php",
+    "presentacion/cliente/historialpdf.php",
     "presentacion/sesionCliente.php",
     "presentacion/sesionEmpleado.php",
     "presentacion/sesionGerente.php"

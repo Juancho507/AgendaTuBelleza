@@ -8,6 +8,7 @@ class PQRSDAO {
     private $cliente;
     private $gerente;
     private $empleado;
+    private $evidencia;
    
     public function __construct(
         $id = "",
@@ -16,7 +17,8 @@ class PQRSDAO {
         $tipoPQRS = "",
         $cliente = "",
         $gerente = "",
-        $empleado = ""
+        $empleado = "",
+        $evidencia = ""
         ) {
             $this->id = $id;
             $this->descripcion = $descripcion;
@@ -25,21 +27,41 @@ class PQRSDAO {
             $this->cliente = $cliente;
             $this->gerente = $gerente;
             $this->empleado = $empleado;
+            $this->evidencia = $evidencia;
     }
 
     public function registrar() {
         $empleadoVal = is_null($this->empleado) ? "NULL" : "'" . $this->empleado . "'";
+        $evidenciaVal = empty($this->evidencia) ? "NULL" : "'" . $this->evidencia . "'"; 
         
-        return "INSERT INTO pqrs (Descripcion, Fecha, TipoPQRS_idTipoPQRS, Cliente_idCliente, Gerente_idGerente, Empleado_idEmpleado)
+        return "INSERT INTO pqrs (Descripcion, Fecha, TipoPQRS_idTipoPQRS, Cliente_idCliente, Gerente_idGerente, Empleado_idEmpleado, Evidencia)
             VALUES (
                 '" . $this->descripcion . "',
                 '" . $this->fecha . "',
                 '" . $this->tipoPQRS . "',
                 '" . $this->cliente . "',
                 '" . $this->gerente . "',
-                " . $empleadoVal . "  
+                " . $empleadoVal . ",
+                " . $evidenciaVal . "
             )";
     }
-  
+    
+    
+    public function consultarHistorialPorCliente($idCliente) {
+       
+        return "
+        SELECT
+            p.idPQRS,
+            p.Descripcion,
+            p.Fecha,
+            p.Evidencia,
+            tp.Tipo AS TipoPQRS,
+            COALESCE(e.Nombre, 'General') AS Empleado
+        FROM pqrs p
+        JOIN tipopqrs tp ON p.TipoPQRS_idTipoPQRS = tp.idTipoPQRS
+        LEFT JOIN empleado e ON p.Empleado_idEmpleado = e.idEmpleado
+        WHERE p.Cliente_idCliente = " . $idCliente . "
+        ORDER BY p.idPQRS DESC";
+    }
 }
 ?>

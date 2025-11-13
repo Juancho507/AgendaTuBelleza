@@ -149,6 +149,7 @@ class Cliente extends Persona {
         $conexion->ejecutar($clienteDAO->activar());
         $conexion->cerrar();
     }
+    
     public function consultarHistorialCitas() {
         $conexion = new Conexion();
         $conexion->abrir();
@@ -161,14 +162,28 @@ class Cliente extends Persona {
                 'idCita' => $registro[0],
                 'Fecha' => $registro[1],
                 'HoraInicio' => $registro[2],
-                'Servicio' => $registro[3],
-                'Empleado' => $registro[4],
-                'Estado' => $registro[5]
+                'HoraFin' => $registro[3],
+                'Servicio' => $registro[4],
+                'Empleado' => $registro[5],
+                'Estado' => $registro[6] 
             ];
         }
         $conexion->cerrar();
         return $historial;
     }
-    
+    public function tieneCitasActivas() {
+        $conexion = new Conexion();
+        $conexion->abrir();
+        $clienteDAO = new ClienteDAO($this->id);
+        
+        $conexion->ejecutar($clienteDAO->verificarCitasActivas());
+        
+        $tieneActivas = $conexion->filas() > 0;
+        $conexion->cerrar();
+        
+        return $tieneActivas;
+    }
 }
+    
+
 ?>

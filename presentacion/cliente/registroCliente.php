@@ -3,6 +3,7 @@ $exito = false;
 $error = false;
 $correoDuplicado = false;
 $errorEnSubidaFoto = false;
+$errorValidacion = 0; 
 $mensaje = "";
 $claseMensaje = "";
 $fotoRuta = "";
@@ -13,38 +14,58 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $correo = $_POST["correo"];
     $contraseña = $_POST["contraseña"];
     $telefono = $_POST["telefono"];
-    $estado = $_POST["estado"];
+    $estado = $_POST["estado"] ?? '1'; 
     $fechaRegistro = date("Y-m-d H:i:s");
-    
-    if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] === UPLOAD_ERR_OK) {
-        $nombreFotoOriginal = $_FILES["foto"]["name"];
-        $rutaTemporal = $_FILES["foto"]["tmp_name"];
-        $extension = pathinfo($nombreFotoOriginal, PATHINFO_EXTENSION);
-        
-        if (strtolower($extension) != 'png') {
-            $mensaje = "Formato de imagen no permitido. Solo se aceptan imágenes PNG.";
-            $claseMensaje = "alert-danger";
-            $errorEnSubidaFoto = true;
-        } else {
-            $nuevoNombreFoto = time() . ".png";
-            $directorioDestino = "imagenes/";
-            $rutaServidor = $directorioDestino . $nuevoNombreFoto;
-            
-            if (move_uploaded_file($rutaTemporal, $rutaServidor)) {
-                $fotoRuta = $rutaServidor;
-            } else {
-                $mensaje = "Error al mover el archivo de la foto al servidor.";
-                $claseMensaje = "alert-danger";
-                $errorEnSubidaFoto = true;
-            }
-        }
-    } else if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] != UPLOAD_ERR_NO_FILE) {
-        $mensaje = "Error en la subida de la foto (código: " . $_FILES["foto"]["error"] . ").";
-        $claseMensaje = "alert-danger";
-        $errorEnSubidaFoto = true;
+
+    if (empty($nombre) || empty($apellido) || empty($correo) || empty($contraseña) || empty($telefono) || empty($estado)) {
+        $errorValidacion = 1;
     }
     
-    if (!$errorEnSubidaFoto) {
+    if ($errorValidacion == 0 && !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $errorValidacion = 2;
+    }
+    
+    if ($errorValidacion == 0 && !preg_match("/^[0-9]+$/", $telefono)) {
+        $errorValidacion = 3;
+    }
+    
+    if ($errorValidacion == 0 && strlen($contraseña) < 6) {
+        $errorValidacion = 4;
+    }
+    
+    $extensionesPermitidas = array('jpg', 'jpeg', 'png', 'gif');
+    
+    if ($errorValidacion == 0) {
+        if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] === UPLOAD_ERR_OK) {
+            $nombreFotoOriginal = $_FILES["foto"]["name"];
+            $rutaTemporal = $_FILES["foto"]["tmp_name"];
+            $extension = pathinfo($nombreFotoOriginal, PATHINFO_EXTENSION);
+            
+            if (!in_array(strtolower($extension), $extensionesPermitidas)) {
+                $mensaje = "Formato de imagen no permitido. Solo se aceptan imágenes JPG, PNG o GIF.";
+                $claseMensaje = "alert-danger";
+                $errorEnSubidaFoto = true;
+            } else {
+                $nuevoNombreFoto = time() . "." . strtolower($extension);
+                $directorioDestino = "imagenes/";
+                $rutaServidor = $directorioDestino . $nuevoNombreFoto;
+                
+                if (move_uploaded_file($rutaTemporal, $rutaServidor)) {
+                    $fotoRuta = $rutaServidor;
+                } else {
+                    $mensaje = "Error al mover el archivo de la foto al servidor (verifique permisos de la carpeta 'imagenes').";
+                    $claseMensaje = "alert-danger";
+                    $errorEnSubidaFoto = true;
+                }
+            }
+        } else if (isset($_FILES["foto"]) && $_FILES["foto"]["error"] != UPLOAD_ERR_NO_FILE) {
+            $mensaje = "Error en la subida de la foto (código: " . $_FILES["foto"]["error"] . ").";
+            $claseMensaje = "alert-danger";
+            $errorEnSubidaFoto = true;
+        }
+    }
+    
+    if ($errorValidacion == 0 && !$errorEnSubidaFoto) {
         require_once "logica/Cliente.php";
         $cliente = new Cliente("", $nombre, $apellido, $correo, $contraseña, $telefono, $estado, $fechaRegistro, $fotoRuta);
         
@@ -58,10 +79,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } catch (Exception $e) {
                 $error = true;
                 if ($fotoRuta != "" && file_exists($fotoRuta)) {
-                    unlink($fotoRuta); 
+                    unlink($fotoRuta);
                 }
-                echo "<div class='alert alert-danger text-center mb-3'>❌ Error de la DB: " . $e->getMessage() . "</div>";
+                $mensaje = "Error de la DB: " . $e->getMessage();
+                $claseMensaje = "alert-danger";
             }
+        }
+    }
+    
+    if ($errorValidacion != 0) {
+        $claseMensaje = "alert-danger";
+        switch ($errorValidacion) {
+            case 1:
+                $mensaje = "🛑 Todos los campos obligatorios deben estar llenos.";
+                break;
+            case 2:
+                $mensaje = "📧 El formato del correo electrónico es incorrecto.";
+                break;
+            case 3:
+                $mensaje = "📞 El campo Teléfono solo debe contener números.";
+                break;
+            case 4:
+                $mensaje = "🔒 La contraseña debe tener al menos 6 caracteres.";
+                break;
         }
     }
 }
@@ -125,44 +165,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <form method="POST" enctype="multipart/form-data" autocomplete="off">
 
       <div class="mb-3">
-          <label class="form-label fw-semibold">Nombre</label>
-          <input type="text" name="nombre" class="form-control" autocomplete="off" required>
+          <label class="form-label fw-semibold">Nombre *</label>
+          <input type="text" name="nombre" class="form-control" value="<?= htmlspecialchars($_POST["nombre"] ?? "") ?>" autocomplete="off" required>
       </div>
 
       <div class="mb-3">
-          <label class="form-label fw-semibold">Apellido</label>
-          <input type="text" name="apellido" class="form-control" autocomplete="off" required>
+          <label class="form-label fw-semibold">Apellido *</label>
+           <input type="text" name="apellido" class="form-control" value="<?= htmlspecialchars($_POST["apellido"] ?? "") ?>" autocomplete="off" required>
       </div>
         
       <div class="mb-3">
-          <label class="form-label fw-semibold">Correo electronico</label>
-          <input type="email" name="correo" class="form-control" autocomplete="off" required>
+          <label class="form-label fw-semibold">Correo electronico *</label>
+          <input type="email" name="correo" class="form-control" value="<?= htmlspecialchars($_POST["correo"] ?? "") ?>" autocomplete="off" required>
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold">Contraseña</label>
-        <input type="password" name="contraseña" class="form-control" autocomplete="new-password" required>
+        <label class="form-label fw-semibold">Contraseña * (Mín. 6 caracteres)</label>
+        <input type="password" name="contraseña" class="form-control" autocomplete="new-password" required minlength="6">
       </div>
 
        <div class="mb-3">
-          <label class="form-label fw-semibold">Telefono</label>
-          <input type="number" name="telefono" class="form-control" autocomplete="off" required> 
+          <label class="form-label fw-semibold">Telefono *</label>
+          <input type="tel" name="telefono" class="form-control" value="<?= htmlspecialchars($_POST["telefono"] ?? "") ?>" autocomplete="off" required pattern="[0-9]+" title="Solo ingrese números."> 
       </div>
 
       <div class="mb-3">
         <label class="form-label fw-semibold">Estado</label>
-        <select name="estado" class="form-select" required> 
-          <option value="1" selected>Activo</option>
-          <option value="0">Inactivo</option>
-        </select>
+        <p class="form-control-plaintext fw-bold text-success">Activo</p>
+        <input type="hidden" name="estado" value="1">
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold">Foto de perfil (solo PNG)</label>
-        <input type="file" name="foto" class="form-control">
+        <label class="form-label fw-semibold">Foto de perfil (JPG, PNG o GIF)</label>
+        <input type="file" name="foto" class="form-control" accept=".jpg, .jpeg, .png, .gif">
       </div>
 
-      <?php if ($exito): ?>
+      <?php 
+      if ($exito): ?>
         <div class="alert alert-success text-center mb-3">
           ✅ ¡Cliente registrado exitosamente!
         </div>
@@ -170,11 +209,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <div class="alert alert-danger text-center mb-3">
           ⚠️ El correo ya está registrado. Intenta con otro.
         </div>
-      <?php elseif ($errorEnSubidaFoto && !empty($mensaje)): ?>
-        <div class="alert <?= $claseMensaje ?> text-center mb-3"><?= $mensaje ?></div>
-      <?php elseif ($error): ?>
-        <div class="alert alert-danger text-center mb-3">
-          ❌ Error al registrar el cliente. Inténtalo nuevamente.
+      <?php elseif ($errorValidacion != 0 || $errorEnSubidaFoto || $error): ?>
+        <div class="alert <?= $claseMensaje ?> text-center mb-3">
+          <?= $mensaje ?>
         </div>
       <?php endif; ?>
 
