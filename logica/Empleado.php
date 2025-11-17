@@ -45,7 +45,7 @@ class Empleado extends Persona {
         $conexion->abrir();
 
         $claveMd5 = md5($this->contraseña);
-        $empleadoDAO = new EmpleadoDAO("", "", $this->correo, $claveMd5);
+        $empleadoDAO = new EmpleadoDAO(correo: $this->correo, contraseña: $claveMd5);
         $conexion->ejecutar($empleadoDAO->autenticarse());
 
         if ($conexion->filas() == 1) {

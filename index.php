@@ -3,6 +3,11 @@ session_start();
 require("logica/Cliente.php");
 require("logica/Gerente.php");
 require("logica/Empleado.php");
+require("logica/Servicio.php");
+require("logica/Producto.php");
+require("logica/PQRS.php");
+require("logica/Cita.php");
+require("logica/Estadistica.php");
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +43,13 @@ $paginas_con_autenticacion = array(
     "presentacion/cliente/historialpdf.php",
     "presentacion/sesionCliente.php",
     "presentacion/sesionEmpleado.php",
-    "presentacion/sesionGerente.php"
+    "presentacion/sesionGerente.php",
+    "presentacion/gerente/registrarServicio.php",
+    "presentacion/gerente/editarServicio.php",
+    "presentacion/gerente/eliminarServicio.php",
+    "presentacion/gerente/consultarServicios.php",
+    "presentacion/gerente/estadisticasServicios.php",
+    "presentacion/gerente/historialServiciospdf.php"
 );
 
 
