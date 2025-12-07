@@ -8,9 +8,6 @@ if ($_SESSION["rol"] != "cliente") {
     exit();
 }
 
-require_once("logica/Cliente.php");
-require_once("logica/PQRS.php");
-
 $idCliente = $_SESSION["id"];
 
 $cliente = new Cliente($idCliente);
